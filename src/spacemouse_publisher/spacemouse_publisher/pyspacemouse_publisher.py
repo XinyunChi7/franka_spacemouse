@@ -26,8 +26,8 @@ class SpaceMousePublisher(Node):
         self.declare_parameter('device_path', '')
         self._device_path = self.get_parameter('device_path').get_parameter_value().string_value
 
-        self._twist_publisher = self.create_publisher(Twist, '/franka_controller/target_cartesian_velocity_percent', 10)
-        self._gripper_width_publisher = self.create_publisher(Float32, '/gripper_client/target_gripper_width_percent', 10)
+        self._twist_publisher = self.create_publisher(Twist, 'franka_controller/target_cartesian_velocity_percent', 10)
+        self._gripper_width_publisher = self.create_publisher(Float32, 'gripper_client/target_gripper_width_percent', 10)
         self._timer = self.create_timer(0.01, self._timer_callback) 
         self._device_open_success = pyspacemouse.open(dof_callback=None, button_callback_arr=[
             pyspacemouse.ButtonCallback([0], self._button_callback),  # Button 1

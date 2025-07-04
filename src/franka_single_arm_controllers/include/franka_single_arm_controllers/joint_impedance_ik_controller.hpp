@@ -86,6 +86,7 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
   const bool k_elbow_activated_{false};
 
   std::string arm_id_;
+  std::string namespace_prefix_;
   urdf::Model model_;
   KDL::Tree tree_;
   KDL::Chain chain_;

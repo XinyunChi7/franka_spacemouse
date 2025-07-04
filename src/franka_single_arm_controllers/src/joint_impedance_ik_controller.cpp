@@ -28,7 +28,7 @@ JointImpedanceIKController::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   for (int i = 1; i <= num_joints_; ++i) {
-    config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/effort");
+    config.names.push_back(namespace_prefix_ + arm_id_ + "_joint" + std::to_string(i) + "/effort");
   }
   return config;
 }
@@ -39,13 +39,15 @@ JointImpedanceIKController::state_interface_configuration() const {
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   config.names = franka_cartesian_pose_->get_state_interface_names();
   for (int i = 1; i <= num_joints_; ++i) {
-    config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/position");
+    config.names.push_back(namespace_prefix_ + arm_id_ + "_joint" + std::to_string(i) +
+                           "/position");
   }
   for (int i = 1; i <= num_joints_; ++i) {
-    config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/velocity");
+    config.names.push_back(namespace_prefix_ + arm_id_ + "_joint" + std::to_string(i) +
+                           "/velocity");
   }
   for (int i = 1; i <= num_joints_; ++i) {
-    config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/effort");
+    config.names.push_back(namespace_prefix_ + arm_id_ + "_joint" + std::to_string(i) + "/effort");
   }
   for (const auto& franka_robot_model_name : franka_robot_model_->get_state_interface_names()) {
     config.names.push_back(franka_robot_model_name);
@@ -120,7 +122,7 @@ CallbackReturn JointImpedanceIKController::on_init() {
 
 bool JointImpedanceIKController::assign_parameters() {
   arm_id_ = get_node()->get_parameter("arm_id").as_string();
-  is_gripper_loaded_ = get_node()->get_parameter("load_gripper").as_bool();
+  is_gripper_loaded_ = get_node()->get_parameter("load_gripper").as_string() == "true";
 
   auto k_gains = get_node()->get_parameter("k_gains").as_double_array();
   auto d_gains = get_node()->get_parameter("d_gains").as_double_array();
@@ -154,6 +156,10 @@ CallbackReturn JointImpedanceIKController::on_configure(
   if (!assign_parameters()) {
     return CallbackReturn::FAILURE;
   }
+
+  namespace_prefix_ = get_node()->get_parameter("namespace").as_string();
+  if (namespace_prefix_ != "")
+    namespace_prefix_ = namespace_prefix_ + "_";
 
   franka_robot_model_ = std::make_unique<franka_semantic_components::FrankaRobotModel>(
       franka_semantic_components::FrankaRobotModel(arm_id_ + "/" + k_robot_model_interface_name,
@@ -205,7 +211,7 @@ CallbackReturn JointImpedanceIKController::on_configure(
     return CallbackReturn::FAILURE;
   }
 
-  if (!tree_.getChain("base", "fr3_hand_tcp", chain_)) {
+  if (!tree_.getChain("base", namespace_prefix_ + "fr3_hand_tcp", chain_)) {
     RCLCPP_FATAL(get_node()->get_logger(), "Failed to extract KDL chain.");
     return CallbackReturn::FAILURE;
   }
