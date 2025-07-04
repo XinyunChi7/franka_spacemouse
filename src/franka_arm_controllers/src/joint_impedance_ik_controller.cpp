@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <franka_single_arm_controllers/default_robot_behavior_utils.hpp>
-#include <franka_single_arm_controllers/joint_impedance_ik_controller.hpp>
+#include <franka_arm_controllers/default_robot_behavior_utils.hpp>
+#include <franka_arm_controllers/joint_impedance_ik_controller.hpp>
 
 #include <chrono>
 #include <string>
@@ -24,7 +24,7 @@
 using namespace std::chrono_literals;
 using Vector7d = Eigen::Matrix<double, 7, 1>;
 
-namespace franka_single_arm_controllers {
+namespace franka_arm_controllers {
 
 controller_interface::InterfaceConfiguration
 JointImpedanceIKController::command_interface_configuration() const {
@@ -333,9 +333,9 @@ void JointImpedanceIKController::solve_ik_(const Eigen::Vector3d& new_position,
   joint_positions_desired_ = joint_vector;
 }
 
-}  // namespace franka_single_arm_controllers
+}  // namespace franka_arm_controllers
 
 #include "pluginlib/class_list_macros.hpp"
 // NOLINTNEXTLINE
-PLUGINLIB_EXPORT_CLASS(franka_single_arm_controllers::JointImpedanceIKController,
+PLUGINLIB_EXPORT_CLASS(franka_arm_controllers::JointImpedanceIKController,
                        controller_interface::ControllerInterface)

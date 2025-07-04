@@ -107,7 +107,7 @@ def generate_robot_nodes(context):
     arm_id = LaunchConfiguration('arm_id').perform(context)
     load_gripper = LaunchConfiguration('load_gripper').perform(context)
     controllers_yaml = PathJoinSubstitution([
-        FindPackageShare('franka_single_arm_controllers'), 'config', "controllers.yaml"
+        FindPackageShare('franka_arm_controllers'), 'config', "controllers.yaml"
     ]).perform(context)
 
     joint_sources_str = LaunchConfiguration('joint_sources').perform(context)

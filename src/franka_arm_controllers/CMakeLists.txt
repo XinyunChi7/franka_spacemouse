@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(franka_single_arm_controllers)
+project(franka_arm_controllers)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -63,7 +63,7 @@ ament_target_dependencies(
 )
 
 pluginlib_export_plugin_description_file(
-        controller_interface franka_single_arm_controllers.xml)
+        controller_interface franka_arm_controllers.xml)
 
 install(
         TARGETS

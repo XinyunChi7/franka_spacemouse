@@ -4,7 +4,7 @@ This repository contains ROS 2 packages for controlling a Franka FR3 arm with th
 
 ## Packages
 
-### 1. `franka_single_arm_controllers`
+### 1. `franka_arm_controllers`
 This package provides a Joint Impedance controller for a single Franka arm. It subscribes to a target cartesian velocity input and sends torque commands to the robot.
 
 #### Key Features:
@@ -80,7 +80,7 @@ colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCHECK_TIDY=ON
 The FrankaSingleArmControllers package comes with a set of tests, which can be executed using the following command:
 
 ```bash
-colcon test --packages-select franka_single_arm_controllers
+colcon test --packages-select franka_arm_controllers
 ```
 
 ## Getting Started
@@ -104,7 +104,7 @@ To get started with the SpaceMouse publisher and Joint Impedance controller:
 2. **Launch the Joint Impedance Controller**  
    Launch the controller to send torque commands to the Franka robot:  
    ```bash
-   ros2 launch franka_single_arm_controllers joint_impedance_ik_controller.launch.py robot_ip:=<robot-ip>
+   ros2 launch franka_arm_controllers joint_impedance_ik_controller.launch.py robot_ip:=<robot-ip>
    ```
 
    Replace `<robot-ip>` with the IP address of your Franka robot.

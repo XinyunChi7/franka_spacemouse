@@ -10,7 +10,7 @@
         type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
 
       joint_impedance_ik_controller:
-        type: franka_single_arm_controllers/JointImpedanceIKController
+        type: franka_arm_controllers/JointImpedanceIKController
 
 /**:
   joint_impedance_ik_controller:

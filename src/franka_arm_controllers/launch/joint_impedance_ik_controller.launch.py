@@ -37,7 +37,7 @@ def generate_robot_nodes(context):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution([
-                        FindPackageShare('franka_single_arm_controllers'), 'launch', 'franka.launch.py'
+                        FindPackageShare('franka_arm_controllers'), 'launch', 'franka.launch.py'
                     ])
                 ),
                 launch_arguments={
@@ -62,7 +62,7 @@ def generate_robot_nodes(context):
                 namespace=namespace,
                 arguments=['joint_impedance_ik_controller', '--controller-manager-timeout', '30'],
                 parameters=[PathJoinSubstitution([
-                    FindPackageShare('franka_single_arm_controllers'), 'config', "controllers.yaml",
+                    FindPackageShare('franka_arm_controllers'), 'config', "controllers.yaml",
                 ])],
                 output='screen',
             )
@@ -86,7 +86,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'robot_config_file',
             default_value=PathJoinSubstitution([
-                FindPackageShare('franka_single_arm_controllers'), 'config', 'config.yaml'
+                FindPackageShare('franka_arm_controllers'), 'config', 'config.yaml'
             ]),
             description='Path to the robot configuration file to load',
         ),

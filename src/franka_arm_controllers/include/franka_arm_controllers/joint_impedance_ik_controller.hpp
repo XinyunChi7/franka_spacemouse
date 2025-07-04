@@ -18,7 +18,7 @@
 #include <string>
 
 #include <controller_interface/controller_interface.hpp>
-#include <franka_single_arm_controllers/robot_utils.hpp>
+#include <franka_arm_controllers/robot_utils.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include "franka_semantic_components/franka_cartesian_pose_interface.hpp"
@@ -36,7 +36,7 @@
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-namespace franka_single_arm_controllers {
+namespace franka_arm_controllers {
 
 /**
  * joint impedance controller to move the robot to a desired pose.
@@ -123,4 +123,4 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
   Eigen::Vector3d desired_angular_position_update_{0.0, 0.0, 0.0};
   Eigen::Quaterniond desired_angular_position_update_quaternion_{1.0, 0.0, 0.0, 0.0};
 };
-}  // namespace franka_single_arm_controllers
+}  // namespace franka_arm_controllers
