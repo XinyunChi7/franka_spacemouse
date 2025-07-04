@@ -26,6 +26,8 @@ option(CHECK_TIDY "Adds clang-tidy tests" OFF)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(orocos_kdl REQUIRED)
+find_package(kdl_parser REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -34,8 +36,6 @@ find_package(hardware_interface REQUIRED)
 find_package(franka_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(franka_semantic_components REQUIRED)
-find_package(moveit_core REQUIRED)
-find_package(moveit_msgs REQUIRED)
 
 add_library(
         ${PROJECT_NAME}
@@ -55,8 +55,9 @@ ament_target_dependencies(
         rclcpp
         rclcpp_lifecycle
         franka_semantic_components
-        moveit_core
-        moveit_msgs
+        orocos_kdl
+        kdl_parser
+        urdf
 )
 
 pluginlib_export_plugin_description_file(
@@ -92,7 +93,6 @@ ament_export_dependencies(
         rclcpp
         rclcpp_lifecycle
         hardware_interface
-        moveit_core
 )
 
 if(BUILD_TESTING)

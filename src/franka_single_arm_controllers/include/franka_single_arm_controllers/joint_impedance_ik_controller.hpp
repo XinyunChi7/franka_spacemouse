@@ -20,10 +20,18 @@
 #include <controller_interface/controller_interface.hpp>
 #include <franka_single_arm_controllers/robot_utils.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <moveit_msgs/srv/get_position_ik.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include "franka_semantic_components/franka_cartesian_pose_interface.hpp"
 #include "franka_semantic_components/franka_robot_model.hpp"
+
+#include <urdf/model.h>
+#include <kdl/chain.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chainiksolverpos_nr_jl.hpp>
+#include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/frames.hpp>
+#include <kdl/jntarray.hpp>
+#include <kdl_parser/kdl_parser.hpp>
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -54,19 +62,6 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
   void update_joint_states();
 
   /**
-   * @brief creates the ik service request for ik service from moveit. Assigns the move-group,
-   * desired pose of the desired link.
-   *
-   * @return std::shared_ptr<moveit_msgs::srv::GetPositionIK::Request> request service message
-   */
-  std::shared_ptr<moveit_msgs::srv::GetPositionIK::Request> create_ik_service_request(
-      const Eigen::Vector3d& new_position,
-      const Eigen::Quaterniond& new_orientation,
-      const std::vector<double>& joint_positions_desired,
-      const std::vector<double>& joint_positions_current,
-      const std::vector<double>& joint_efforts_current);
-
-  /**
    * @brief computes the torque commands based on impedance control law with compensated coriolis
    * terms
    *
@@ -87,11 +82,16 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
 
   Eigen::Quaterniond orientation_;
   Eigen::Vector3d position_;
-  rclcpp::Client<moveit_msgs::srv::GetPositionIK>::SharedPtr compute_ik_client_;
 
   const bool k_elbow_activated_{false};
 
   std::string arm_id_;
+  urdf::Model model_;
+  KDL::Tree tree_;
+  KDL::Chain chain_;
+  unsigned int nj_;
+  KDL::JntArray q_min_, q_max_, q_init_, q_result_;
+  void solve_ik_(const Eigen::Vector3d& new_position, const Eigen::Quaterniond& new_orientation);
   bool is_gripper_loaded_ = true;
   std::string robot_description_;
   std::unique_ptr<franka_semantic_components::FrankaRobotModel> franka_robot_model_;

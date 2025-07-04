@@ -60,40 +60,10 @@ void JointImpedanceIKController::update_joint_states() {
     const auto& velocity_interface = state_interfaces_.at(23 + i);
     const auto& effort_interface = state_interfaces_.at(30 + i);
     joint_positions_current_[i] = position_interface.get_value();
+    q_init_(i) = joint_positions_current_[i];
     joint_velocities_current_[i] = velocity_interface.get_value();
     joint_efforts_current_[i] = effort_interface.get_value();
   }
-}
-
-std::shared_ptr<moveit_msgs::srv::GetPositionIK::Request>
-JointImpedanceIKController::create_ik_service_request(
-    const Eigen::Vector3d& position,
-    const Eigen::Quaterniond& orientation,
-    const std::vector<double>& joint_positions_current,
-    const std::vector<double>& joint_velocities_current,
-    const std::vector<double>& joint_efforts_current) {
-  auto service_request = std::make_shared<moveit_msgs::srv::GetPositionIK::Request>();
-
-  service_request->ik_request.group_name = arm_id_ + "_arm";
-  service_request->ik_request.pose_stamped.header.frame_id = arm_id_ + "_link0";
-  service_request->ik_request.pose_stamped.pose.position.x = position.x();
-  service_request->ik_request.pose_stamped.pose.position.y = position.y();
-  service_request->ik_request.pose_stamped.pose.position.z = position.z();
-  service_request->ik_request.pose_stamped.pose.orientation.x = orientation.x();
-  service_request->ik_request.pose_stamped.pose.orientation.y = orientation.y();
-  service_request->ik_request.pose_stamped.pose.orientation.z = orientation.z();
-  service_request->ik_request.pose_stamped.pose.orientation.w = orientation.w();
-  service_request->ik_request.robot_state.joint_state.name = {
-      arm_id_ + "_joint1", arm_id_ + "_joint2", arm_id_ + "_joint3", arm_id_ + "_joint4",
-      arm_id_ + "_joint5", arm_id_ + "_joint6", arm_id_ + "_joint7"};
-  service_request->ik_request.robot_state.joint_state.position = joint_positions_current;
-  service_request->ik_request.robot_state.joint_state.velocity = joint_velocities_current;
-  service_request->ik_request.robot_state.joint_state.effort = joint_efforts_current;
-
-  if (is_gripper_loaded_) {
-    service_request->ik_request.ik_link_name = arm_id_ + "_hand_tcp";
-  }
-  return service_request;
 }
 
 Vector7d JointImpedanceIKController::compute_torque_command(
@@ -119,23 +89,8 @@ controller_interface::return_type JointImpedanceIKController::update(
 
   auto new_position = position_ + desired_linear_position_update_;
   auto new_orientation = orientation_ * desired_angular_position_update_quaternion_;
-  auto service_request =
-      create_ik_service_request(new_position, new_orientation, joint_positions_current_,
-                                joint_velocities_current_, joint_efforts_current_);
 
-  using ServiceResponseFuture = rclcpp::Client<moveit_msgs::srv::GetPositionIK>::SharedFuture;
-  auto response_received_callback =
-      [&](ServiceResponseFuture future) {  // NOLINT(performance-unnecessary-value-param)
-        const auto& response = future.get();
-
-        if (response->error_code.val == response->error_code.SUCCESS) {
-          joint_positions_desired_ = response->solution.joint_state.position;
-        } else {
-          RCLCPP_INFO(get_node()->get_logger(), "Inverse kinematics solution failed.");
-        }
-      };
-  auto result_future_ =
-      compute_ik_client_->async_send_request(service_request, response_received_callback);
+  solve_ik_(new_position, new_orientation);
 
   if (joint_positions_desired_.empty()) {
     return controller_interface::return_type::OK;
@@ -205,16 +160,7 @@ CallbackReturn JointImpedanceIKController::on_configure(
                                                    arm_id_ + "/" + k_robot_state_interface_name));
 
   auto collision_client = get_node()->create_client<franka_msgs::srv::SetFullCollisionBehavior>(
-      "/service_server/set_full_collision_behavior");
-  compute_ik_client_ = get_node()->create_client<moveit_msgs::srv::GetPositionIK>("/compute_ik");
-
-  while (!compute_ik_client_->wait_for_service(1s) || !collision_client->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(get_node()->get_logger(), "Interrupted while waiting for the service. Exiting.");
-      return CallbackReturn::ERROR;
-    }
-    RCLCPP_INFO(get_node()->get_logger(), "service not available, waiting again...");
-  }
+      "service_server/set_full_collision_behavior");
 
   auto request = DefaultRobotBehavior::getDefaultCollisionBehaviorRequest();
   auto future_result = collision_client->async_send_request(request);
@@ -229,7 +175,7 @@ CallbackReturn JointImpedanceIKController::on_configure(
   }
 
   auto parameters_client =
-      std::make_shared<rclcpp::AsyncParametersClient>(get_node(), "/robot_state_publisher");
+      std::make_shared<rclcpp::AsyncParametersClient>(get_node(), "robot_state_publisher");
   parameters_client->wait_for_service();
 
   auto future = parameters_client->get_parameters({"robot_description"});
@@ -248,6 +194,48 @@ CallbackReturn JointImpedanceIKController::on_configure(
 
   RCLCPP_INFO(get_node()->get_logger(),
               "Subscribed to franka_controller/target_cartesian_velocity_percent.");
+
+  if (!model_.initString(robot_description_)) {
+    RCLCPP_FATAL(get_node()->get_logger(), "Failed to parse processed URDF");
+    return CallbackReturn::FAILURE;
+  }
+
+  if (!kdl_parser::treeFromUrdfModel(model_, tree_)) {
+    RCLCPP_FATAL(get_node()->get_logger(), "Failed to convert URDF to KDL tree.");
+    return CallbackReturn::FAILURE;
+  }
+
+  if (!tree_.getChain("base", "fr3_hand_tcp", chain_)) {
+    RCLCPP_FATAL(get_node()->get_logger(), "Failed to extract KDL chain.");
+    return CallbackReturn::FAILURE;
+  }
+
+  nj_ = chain_.getNrOfJoints();
+  q_min_ = KDL::JntArray(nj_);
+  q_max_ = KDL::JntArray(nj_);
+  q_init_ = KDL::JntArray(nj_);
+  q_result_ = KDL::JntArray(nj_);
+
+  // Extract joint limits from URDF
+  unsigned int j = 0;
+  for (const auto& segment : chain_.segments) {
+    const KDL::Joint& kdl_joint = segment.getJoint();
+    if (kdl_joint.getType() == KDL::Joint::None) {
+      continue;
+    }
+
+    const std::string& joint_name = kdl_joint.getName();
+    auto joint = model_.getJoint(joint_name);
+    if (!joint || !joint->limits) {
+      RCLCPP_FATAL(get_node()->get_logger(), "No limits found for joint: %s", joint_name.c_str());
+      return CallbackReturn::FAILURE;
+    }
+
+    q_min_(j) = joint->limits->lower;
+    q_max_(j) = joint->limits->upper;
+    q_init_(j) = (q_max_(j) + q_min_(j)) / 2;
+    ++j;
+  }
 
   return CallbackReturn::SUCCESS;
 }
@@ -288,6 +276,28 @@ void JointImpedanceIKController::spacemouse_callback(
   Eigen::AngleAxisd pitchAngle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
   Eigen::AngleAxisd yawAngle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
   desired_angular_position_update_quaternion_ = yawAngle * pitchAngle * rollAngle;
+}
+
+void JointImpedanceIKController::solve_ik_(const Eigen::Vector3d& new_position,
+                                           const Eigen::Quaterniond& new_orientation) {
+  KDL::ChainFkSolverPos_recursive fk_solver(chain_);
+  KDL::ChainIkSolverVel_pinv vel_solver(chain_);
+  KDL::ChainIkSolverPos_NR_JL ik_solver(chain_, q_min_, q_max_, fk_solver, vel_solver, 100, 1e-6);
+
+  KDL::Rotation kdl_rot = KDL::Rotation::Quaternion(new_orientation.x(), new_orientation.y(),
+                                                    new_orientation.z(), new_orientation.w());
+  KDL::Vector kdl_pos(new_position.x(), new_position.y(), new_position.z());
+  KDL::Frame desired_pose(kdl_rot, kdl_pos);
+
+  int status = ik_solver.CartToJnt(q_init_, desired_pose, q_result_);
+  if (status < 0) {
+    RCLCPP_FATAL(get_node()->get_logger(), "IK Failed with error code: %d", status);
+    throw std::runtime_error("IK Failed");
+  }
+
+  std::vector<double> joint_vector(q_result_.data.data(), q_result_.data.data() + q_result_.rows());
+
+  joint_positions_desired_ = joint_vector;
 }
 
 }  // namespace franka_single_arm_controllers
