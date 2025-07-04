@@ -43,7 +43,27 @@ To get started, open the project in VS Code so that the `.devcontainer` folder i
 
 The initial container build may take a few minutes. Once complete, you'll be inside a ready-to-use development environment. For more details, see the [VS-Code Dev-Containers documentation](https://code.visualstudio.com/docs/devcontainers/containers).
 
-If you choose not to use the Dev-Container, you will need to manually install the dependencies listed in the `Dockerfile` located in the `.devcontainer` folder.
+
+If you choose not to use the Dev-Container, please refer to the [Local Setup](#local-setup) section below for manual installation instructions.
+
+## Local Setup
+
+### Prerequisites
+
+- **ROS 2 Humble Desktop** must be installed.  
+  See the [official installation guide](https://docs.ros.org/en/humble/Installation.html) for instructions.
+- **libfranka** and **franka_ros2** must be installed.  
+  Refer to the [Franka Robotics documentation](https://frankarobotics.github.io/docs/index.html) for installation steps and compatibility information.
+
+> 💡 **Hint:**  
+> You can also find example installation commands for `libfranka` and `franka_ros2` in the [Dockerfile](./.devcontainer/Dockerfile) located in the `.devcontainer` directory. These commands can be copy-pasted for your local setup.
+
+### Further Dependency Installations
+
+After installing the prerequisites, you may need to install additional dependencies required by this workspace. For this you can run the `install_workspace_dependencies.bash` script.
+
+If you add new dependencies to your packages, remember to update the relevant `requirements.txt`, `requirements_dev.txt` or `package.xml` files and re-run the script.
+
 
 ## Build and Test
 

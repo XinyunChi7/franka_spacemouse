@@ -34,5 +34,6 @@
       }
   },
   "workspaceFolder": "/workspace/",
-  "shutdownAction": "stopCompose"
+  "shutdownAction": "stopCompose",
+    "postCreateCommand": "/bin/bash /workspace/install_workspace_dependencies.bash"
 }
