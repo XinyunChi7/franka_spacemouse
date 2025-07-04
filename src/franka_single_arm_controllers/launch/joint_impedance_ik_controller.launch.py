@@ -51,6 +51,7 @@ def generate_robot_nodes(context):
                     'fake_sensor_commands': str(config['fake_sensor_commands']),
                     'joint_sources': ','.join(config['joint_sources']),
                     'joint_state_rate': str(config['joint_state_rate']),
+                    'arbitrary_mounting': str(config['arbitrary_mounting']),
                 }.items(),
             )
         )

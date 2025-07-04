@@ -24,6 +24,7 @@
 #include "franka_semantic_components/franka_cartesian_pose_interface.hpp"
 #include "franka_semantic_components/franka_robot_model.hpp"
 
+#include <tf2/LinearMath/Vector3.h>
 #include <urdf/model.h>
 #include <kdl/chain.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
@@ -59,7 +60,7 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
    * @brief updates the joint states from the state interfaces
    *
    */
-  void update_joint_states();
+  void update_joint_states_();
 
   /**
    * @brief computes the torque commands based on impedance control law with compensated coriolis
@@ -67,16 +68,19 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
    *
    * @return Eigen::Vector7d torque for each joint of the robot
    */
-  Vector7d compute_torque_command(const Vector7d& joint_positions_desired,
-                                  const Vector7d& joint_positions_current,
-                                  const Vector7d& joint_velocities_current);
+  Vector7d compute_torque_command_(const Vector7d& joint_positions_desired,
+                                   const Vector7d& joint_positions_current,
+                                   const Vector7d& joint_velocities_current);
 
   /**
    * @brief assigns the Kp, Kd and arm_id parameters
    *
    * @return true when parameters are present, false when parameters are not available
    */
-  bool assign_parameters();
+  bool assign_parameters_();
+
+  tf2::Vector3 transform_velocity_to_world_frame_(
+      const geometry_msgs::msg::Twist::SharedPtr& msg) const;
 
   std::unique_ptr<franka_semantic_components::FrankaCartesianPoseInterface> franka_cartesian_pose_;
 
@@ -94,6 +98,8 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
   KDL::JntArray q_min_, q_max_, q_init_, q_result_;
   void solve_ik_(const Eigen::Vector3d& new_position, const Eigen::Quaterniond& new_orientation);
   bool is_gripper_loaded_ = true;
+  std::vector<double> arbitrary_mounting_;
+
   std::string robot_description_;
   std::unique_ptr<franka_semantic_components::FrankaRobotModel> franka_robot_model_;
 

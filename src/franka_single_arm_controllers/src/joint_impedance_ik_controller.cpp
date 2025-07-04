@@ -18,6 +18,9 @@
 #include <chrono>
 #include <string>
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+
 using namespace std::chrono_literals;
 using Vector7d = Eigen::Matrix<double, 7, 1>;
 
@@ -56,7 +59,7 @@ JointImpedanceIKController::state_interface_configuration() const {
   return config;
 }
 
-void JointImpedanceIKController::update_joint_states() {
+void JointImpedanceIKController::update_joint_states_() {
   for (auto i = 0; i < num_joints_; ++i) {
     const auto& position_interface = state_interfaces_.at(16 + i);
     const auto& velocity_interface = state_interfaces_.at(23 + i);
@@ -68,7 +71,7 @@ void JointImpedanceIKController::update_joint_states() {
   }
 }
 
-Vector7d JointImpedanceIKController::compute_torque_command(
+Vector7d JointImpedanceIKController::compute_torque_command_(
     const Vector7d& joint_positions_desired,
     const Vector7d& joint_positions_current,
     const Vector7d& joint_velocities_current) {
@@ -86,7 +89,7 @@ Vector7d JointImpedanceIKController::compute_torque_command(
 controller_interface::return_type JointImpedanceIKController::update(
     const rclcpp::Time& /*time*/,
     const rclcpp::Duration& /*period*/) {
-  update_joint_states();
+  update_joint_states_();
   std::tie(orientation_, position_) = franka_cartesian_pose_->getCurrentOrientationAndTranslation();
 
   auto new_position = position_ + desired_linear_position_update_;
@@ -102,7 +105,7 @@ controller_interface::return_type JointImpedanceIKController::update(
   Vector7d joint_positions_current_eigen(joint_positions_current_.data());
   Vector7d joint_velocities_current_eigen(joint_velocities_current_.data());
 
-  auto tau_d_calculated = compute_torque_command(
+  auto tau_d_calculated = compute_torque_command_(
       joint_positions_desired_eigen, joint_positions_current_eigen, joint_velocities_current_eigen);
 
   for (int i = 0; i < num_joints_; i++) {
@@ -120,9 +123,10 @@ CallbackReturn JointImpedanceIKController::on_init() {
   return CallbackReturn::SUCCESS;
 }
 
-bool JointImpedanceIKController::assign_parameters() {
+bool JointImpedanceIKController::assign_parameters_() {
   arm_id_ = get_node()->get_parameter("arm_id").as_string();
   is_gripper_loaded_ = get_node()->get_parameter("load_gripper").as_string() == "true";
+  arbitrary_mounting_ = get_node()->get_parameter("arbitrary_mounting").as_double_array();
 
   auto k_gains = get_node()->get_parameter("k_gains").as_double_array();
   auto d_gains = get_node()->get_parameter("d_gains").as_double_array();
@@ -153,7 +157,7 @@ bool JointImpedanceIKController::assign_parameters() {
 
 CallbackReturn JointImpedanceIKController::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  if (!assign_parameters()) {
+  if (!assign_parameters_()) {
     return CallbackReturn::FAILURE;
   }
 
@@ -274,14 +278,37 @@ void JointImpedanceIKController::spacemouse_callback(
   // will make it move faster but less precise.
   const double max_linear_pos_update = 0.007;
   const double max_angular_pos_update = 0.03;
-  desired_linear_position_update_ =
-      max_linear_pos_update * Eigen::Vector3d(msg->linear.x, msg->linear.y, msg->linear.z);
+
+  tf2::Vector3 v_linear_world = transform_velocity_to_world_frame_(msg);
+
   desired_angular_position_update_ =
       max_angular_pos_update * Eigen::Vector3d(msg->angular.x, msg->angular.y, msg->angular.z);
+  desired_linear_position_update_ =
+      max_linear_pos_update *
+      Eigen::Vector3d(v_linear_world.x(), v_linear_world.y(), v_linear_world.z());
+
   Eigen::AngleAxisd rollAngle(desired_angular_position_update_.x(), Eigen::Vector3d::UnitX());
   Eigen::AngleAxisd pitchAngle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
   Eigen::AngleAxisd yawAngle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
   desired_angular_position_update_quaternion_ = yawAngle * pitchAngle * rollAngle;
+}
+
+tf2::Vector3 JointImpedanceIKController::transform_velocity_to_world_frame_(
+    const geometry_msgs::msg::Twist::SharedPtr& msg) const {
+  tf2::Quaternion q;
+  q.setRPY(arbitrary_mounting_[0], arbitrary_mounting_[1], arbitrary_mounting_[2]);
+
+  // Create rotation matrix from quaternion
+  tf2::Matrix3x3 rotation_matrix(q);
+
+  // Invert the transformation from robot-frame to world-frame
+  rotation_matrix = rotation_matrix.transpose();
+
+  tf2::Vector3 v_linear_robot(msg->linear.x, msg->linear.y, msg->linear.z);
+
+  tf2::Vector3 v_linear_world = rotation_matrix * v_linear_robot;
+
+  return v_linear_world;
 }
 
 void JointImpedanceIKController::solve_ik_(const Eigen::Vector3d& new_position,
@@ -307,6 +334,7 @@ void JointImpedanceIKController::solve_ik_(const Eigen::Vector3d& new_position,
 }
 
 }  // namespace franka_single_arm_controllers
+
 #include "pluginlib/class_list_macros.hpp"
 // NOLINTNEXTLINE
 PLUGINLIB_EXPORT_CLASS(franka_single_arm_controllers::JointImpedanceIKController,

@@ -17,6 +17,7 @@
   <depend>franka_semantic_components</depend>
   <depend>orocos_kdl_vendor</depend>
   <depend>kdl_parser</depend>
+  <depend>tf2</depend>
 
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_copyright</test_depend>

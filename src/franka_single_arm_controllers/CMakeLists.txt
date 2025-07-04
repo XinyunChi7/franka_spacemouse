@@ -36,6 +36,7 @@ find_package(hardware_interface REQUIRED)
 find_package(franka_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(franka_semantic_components REQUIRED)
+find_package(tf2 REQUIRED)
 
 add_library(
         ${PROJECT_NAME}
@@ -58,6 +59,7 @@ ament_target_dependencies(
         orocos_kdl
         kdl_parser
         urdf
+        tf2
 )
 
 pluginlib_export_plugin_description_file(

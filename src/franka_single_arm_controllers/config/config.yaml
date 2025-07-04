@@ -9,7 +9,10 @@ LEFT:
   robot_ip: "192.168.20.11"
   urdf_file: "fr3/fr3.urdf.xacro"
   use_fake_hardware: "false"
-  use_rviz: "false" 
+  use_rviz: "false"
+  # mounting roll, pitch, yaw in rad
+  arbitrary_mounting: [0.8933480924,-0.1745607426,0.4633450616]
+
 RIGHT:
   arm_id: "fr3"
   arm_prefix: "right"
@@ -22,3 +25,5 @@ RIGHT:
   urdf_file: "fr3/fr3.urdf.xacro"
   use_fake_hardware: "false"
   use_rviz: "false"
+  # mounting roll, pitch, yaw in rad
+  arbitrary_mounting: [-0.8933480924,-0.1745607426,-0.4633450616]

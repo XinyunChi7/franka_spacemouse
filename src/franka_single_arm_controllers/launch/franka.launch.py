@@ -113,6 +113,7 @@ def generate_robot_nodes(context):
     joint_sources_str = LaunchConfiguration('joint_sources').perform(context)
     joint_sources = joint_sources_str.split(',')
     joint_state_rate = int(LaunchConfiguration('joint_state_rate').perform(context))
+    arbitrary_mounting = LaunchConfiguration('arbitrary_mounting').perform(context)
 
     nodes = [
         Node(
@@ -130,7 +131,8 @@ def generate_robot_nodes(context):
                         {'robot_description': robot_description},
                         {'arm_id': arm_id},
                         {'namespace': namespace},
-                        {'load_gripper': load_gripper}
+                        {'load_gripper': load_gripper},
+                        {'arbitrary_mounting': [float(x) for x in arbitrary_mounting.strip('[]').split(',')]},
                        ],
             remappings=[('joint_states', 'franka/joint_states')],
             output={
@@ -217,6 +219,9 @@ def generate_launch_description():
         DeclareLaunchArgument('joint_state_rate',
                               default_value='30',
                               description='Rate for joint state publishing (Hz)'),
+        DeclareLaunchArgument('arbitrary_mounting',
+                              default_value='[0.0,0.0,0.0]',
+                              description='Arbitrary mounting given as comma-separated roll, pitch, yaw values in rad'),
     ]
 
     return LaunchDescription(launch_args + [OpaqueFunction(function=generate_robot_nodes)])
