@@ -7,19 +7,20 @@ from sensor_msgs.msg import JointState
 from rclpy.action import ActionClient
 from std_msgs.msg import Float32
 
-DEFAULT_GRASP_ACTION_TOPIC = '/fr3_gripper/grasp'
-DEFAULT_HOMING_ACTION_TOPIC = '/fr3_gripper/homing'
-DEFAULT_JOINT_STATES_TOPIC = '/fr3_gripper/joint_states'
+DEFAULT_GRASP_ACTION_TOPIC = '/franka_gripper/grasp'
+DEFAULT_HOMING_ACTION_TOPIC = '/franka_gripper/homing'
+DEFAULT_JOINT_STATES_TOPIC = '/franka_gripper/joint_states'
 DEFAULT_GRIPPER_COMMAND_TOPIC = '/gripper_client/target_gripper_width_percent'
-DEFAULT_GRIPPER_EPSILON_INNER = 0.08 # max gripper width for default fingers
-DEFAULT_GRIPPER_EPSILON_OUTER = 0.08 # max gripper width for default fingers
-DEFAULT_GRIPPER_SPEED = 1.0 # max gripper speed
-DEFAULT_GRIPPER_FORCE = 70.0 # max gripper force
+DEFAULT_GRIPPER_EPSILON_INNER = '0.08' # max gripper width for default fingers
+DEFAULT_GRIPPER_EPSILON_OUTER = '0.08' # max gripper width for default fingers
+DEFAULT_GRIPPER_SPEED = '1.0' # max gripper speed
+DEFAULT_GRIPPER_FORCE = '70.0' # max gripper force
 
 class GripperClient(Node):
   def __init__(self):
     super().__init__('gripper_client')
 
+    self.declare_parameter('namespace', '')
     self.declare_parameter('grasp_action_topic', DEFAULT_GRASP_ACTION_TOPIC)
     self.declare_parameter('homing_action_topic', DEFAULT_HOMING_ACTION_TOPIC)
     self.declare_parameter('gripper_command_topic', DEFAULT_GRIPPER_COMMAND_TOPIC)
@@ -29,14 +30,17 @@ class GripperClient(Node):
     self.declare_parameter('gripper_speed', DEFAULT_GRIPPER_SPEED)
     self.declare_parameter('gripper_force', DEFAULT_GRIPPER_FORCE)
 
-    grasp_action_topic = self.get_parameter('grasp_action_topic').get_parameter_value().string_value
-    homing_action_topic = self.get_parameter('homing_action_topic').get_parameter_value().string_value
-    gripper_command_topic = self.get_parameter('gripper_command_topic').get_parameter_value().string_value
-    joint_states_topic = self.get_parameter('joint_states_topic').get_parameter_value().string_value
-    self._gripper_epsilon_inner = self.get_parameter('gripper_epsilon_inner').get_parameter_value().double_value
-    self._gripper_epsilon_outer = self.get_parameter('gripper_epsilon_outer').get_parameter_value().double_value
-    self.gripper_speed = self.get_parameter('gripper_speed').get_parameter_value().double_value
-    self.gripper_force = self.get_parameter('gripper_force').get_parameter_value().double_value
+    namespace = self.get_parameter('namespace').get_parameter_value().string_value
+    if namespace != '':
+      namespace = '/' + namespace
+    grasp_action_topic = namespace + self.get_parameter('grasp_action_topic').get_parameter_value().string_value
+    homing_action_topic = namespace + self.get_parameter('homing_action_topic').get_parameter_value().string_value
+    gripper_command_topic = namespace + self.get_parameter('gripper_command_topic').get_parameter_value().string_value
+    joint_states_topic = namespace + self.get_parameter('joint_states_topic').get_parameter_value().string_value
+    self._gripper_epsilon_inner = float(self.get_parameter('gripper_epsilon_inner').get_parameter_value().string_value)
+    self._gripper_epsilon_outer = float(self.get_parameter('gripper_epsilon_outer').get_parameter_value().string_value)
+    self.gripper_speed = float(self.get_parameter('gripper_speed').get_parameter_value().string_value)
+    self.gripper_force = float(self.get_parameter('gripper_force').get_parameter_value().string_value)
 
     self._ACTION_SERVER_TIMEOUT = 10.0
     self._MIN_GRIPPER_WIDTH_PERCENT = 0.0

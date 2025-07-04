@@ -1,25 +1,53 @@
+import os
+import yaml
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
+def load_yaml(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
+
+def generate_nodes(context):
+    config_file = LaunchConfiguration('gripper_manager_config_file').perform(context)
+    configs = load_yaml(config_file)
+    nodes = []
+    for item_name, config in configs.items():
+        nodes.append(
+            Node(
+                package='gripper_manager',
+                executable='franka_gripper_client',
+                name='franka_gripper_client',
+                namespace=str(config['namespace']),
+                output='screen',
+                parameters=[
+                    {'namespace': str(config['namespace'])},
+                    {'grasp_action_topic': str(config['grasp_action_topic'])},
+                    {'homing_action_topic': str(config['homing_action_topic'])},
+                    {'gripper_command_topic': str(config['gripper_command_topic'])},
+                    {'joint_states_topic': str(config['joint_states_topic'])}, 
+                    {'gripper_epsilon_inner': str(config['gripper_epsilon_inner'])}, 
+                    {'gripper_epsilon_outer': str(config['gripper_epsilon_outer'])}, 
+                    {'gripper_speed': str(config['gripper_speed'])}, 
+                    {'gripper_force': str(config['gripper_force'])} 
+                ]
+            )
+        )
+        
+    return nodes
 
 def generate_launch_description():
-  args=[]
-  nodes=[
-    Node(
-      package='gripper_manager',
-      executable='franka_gripper_client',
-      name='franka_gripper_client',
-      output='screen',
-      parameters=[
-        {'grasp_action_topic': '/fr3_gripper/grasp'},
-        {'homing_action_topic': '/fr3_gripper/homing'},
-        {'gripper_command_topic': '/gripper_client/target_gripper_width_percent'},
-        {'joint_states_topic': '/fr3_gripper/joint_states'}, 
-        {'gripper_epsilon_inner': 0.08}, # max gripper width for default fingers
-        {'gripper_epsilon_outer': 0.08}, # max gripper width for default fingers
-        {'gripper_speed': 1.0}, # max gripper speed
-        {'gripper_force': 70.0} # max gripper force
-      ]
-    )
-  ]
-
-  return LaunchDescription(args+nodes)
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'gripper_manager_config_file',
+            default_value=PathJoinSubstitution([
+                FindPackageShare('gripper_manager'), 'config', 'config.yaml'
+            ]),
+            description='Path to the gripper_manager configuration file to load',
+        ),
+        OpaqueFunction(function=generate_nodes),
+    ])
