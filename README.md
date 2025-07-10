@@ -5,7 +5,7 @@ This repository contains ROS 2 packages for controlling a Franka FR3 arm with th
 ## Packages
 
 ### 1. `franka_arm_controllers`
-This package provides a Joint Impedance controller for a single Franka arm. It subscribes to a target cartesian velocity input and sends torque commands to the robot.
+This package provides a Joint Impedance controller for Franka arms. It subscribes to a target cartesian velocity input and sends torque commands to the robot.
 
 #### Key Features:
 - Implements a `JointImpedanceController` for controlling the robot's torques.
@@ -75,9 +75,9 @@ To build the project, use the following `colcon` command with CMake arguments, r
 colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCHECK_TIDY=ON
 ```
 
-### Testing of FrankaSingleArmControllers
+### Testing of FrankaArmControllers
 
-The FrankaSingleArmControllers package comes with a set of tests, which can be executed using the following command:
+The FrankaArmControllers package comes with a set of tests, which can be executed using the following command:
 
 ```bash
 colcon test --packages-select franka_arm_controllers
@@ -87,77 +87,121 @@ colcon test --packages-select franka_arm_controllers
 
 To get started with the SpaceMouse publisher and Joint Impedance controller:
 
-1. **Run the SpaceMouse Publisher**  
-   Launch the SpaceMouse publisher node to read input from the SpaceMouse and publish it as ROS 2 messages:  
-   ```bash
-   ros2 launch spacemouse_publisher spacemouse_publisher.launch.py [operator_position_front:=<true_or_false>] [device_path:=<device-path>]
-   ```
+### Identify the Connected SpaceMouse Devices (OPTIONAL) 
 
-   The `operator_position_front` parameter is **optional**. If not provided, it defaults to `True`.  
-   - Set `operator_position_front:=True` if the operator is sitting in front of the robot.  
-   - Set `operator_position_front:=False` if the operator is positioned elsewhere.
-   Hint: This aligns the coordinate system of the SpaceMouse to the end-effector. Rotating the SpaceMouse can fulfill the same functionality, if, for example, you are seated on the robot's right side. 
-
-   The `device_path` parameter is **optional**. If not provided, it defaults to `''`, leading to automatic SpaceMouse detection. This parameter is only required, if multiple devices are connected and a specific one shall be used as input device. If not defined, the first one found will be used.
-
-
-2. **Launch the Joint Impedance Controller**  
-   Launch the controller to send torque commands to the Franka robot:  
-   ```bash
-   ros2 launch franka_arm_controllers joint_impedance_ik_controller.launch.py robot_ip:=<robot-ip>
-   ```
-
-   Replace `<robot-ip>` with the IP address of your Franka robot.
-
-3. **Launch the Gripper Manager**
-   Start the gripper manager node to control the gripper:
-   ```bash
-   ros2 launch gripper_manager franka_gripper_client.launch.py 
-   ```
-
-## Multi-Arm Support
-
-To enable teleoperation with multiple SpaceMice on a single device, you need to specify which SpaceMouse to use for each instance of the SpaceMouse Publisher. This can be achieved using the optional `device_path` parameter, as described in **Getting Started**, section 1.
-
-### Step 1: Identify the Connected SpaceMouse Devices
-To determine which connected HID (Human Interface Device) corresponds to each SpaceMouse, run the following command:
+This step is only required if multiple SpaceMouses are connected to the device. To determine which connected HID (Human Interface Device) corresponds to each SpaceMouse, run the following command:
 ```bash
 grep -H . /sys/class/hidraw/hidraw*/device/uevent | grep SpaceMouse
 ```
 
-This will output something like: ` /sys/class/hidraw/hidraw1/device/uevent:HID_NAME=3Dconnexion SpaceMouse Wireless BT` 
+This will output something like: `/sys/class/hidraw/hidraw1/device/uevent:HID_NAME=3Dconnexion SpaceMouse Wireless BT` 
 
 In this example, **hidraw1** is the identifier for the SpaceMouse. Based on this, the `device_path` for this SpaceMouse would be: `/dev/hidraw1`
 
-### Step 2: Launch Multiple Instances
-Once you have identified the `device_path` for each SpaceMouse, you can launch multiple instances of the SpaceMouse Publisher. To avoid conflicts between instances, use different `ROS_DOMAIN_ID`s for each setup.
+### Run the SpaceMouse Publisher 
 
-Set the `ROS_DOMAIN_ID` environment variable for each terminal before launching the node: 
-```bash 
-export ROS_DOMAIN_ID=<unique_id>
-```
+Create a configuration file in `src/spacemouse_publisher/config/` or modify one of the provided example configuration files. Then launch the SpaceMouse publisher node to read input from the SpaceMouse and publish it as ROS 2 messages:
 
-Replace `<unique_id>` with a unique number for each instance. Ensure that all nodes belonging to the same setup use the same `ROS_DOMAIN_ID`.
-
-### Example Workflow
-1. Identify the `device_path` for each SpaceMouse (e.g., `/dev/hidraw1`, `/dev/hidraw2`).
-2. Open a new terminal for each SpaceMouse instance.
-3. Set a unique `ROS_DOMAIN_ID` in each terminal:
 ```bash
-export ROS_DOMAIN_ID=1  # For the first SpaceMouse
-export ROS_DOMAIN_ID=2  # For the second SpaceMouse
+ros2 launch spacemouse_publisher spacemouse_publisher.launch.py [spacemouse_config_file:=your_config.yaml]
 ```
-4. Launch the SpaceMouse Publisher for each instance, specifying the corresponding `device_path`:
+
+The `spacemouse_config_file` argument is **optional**. If not provided, it defaults to `example_fr3_config.yaml` in the `spacemouse_publisher/config/` directory.
+
+**Configuration parameters:**
+
+- `namespace`: ROS 2 namespace (must match the robot and the gripper).
+- `operator_position_front`:  
+- Set `operator_position_front: True` if the operator is sitting in front of the robot.  
+- Set `operator_position_front: False` if the operator is positioned elsewhere.  
+*Hint: This aligns the coordinate system of the SpaceMouse to the end-effector. Rotating the SpaceMouse can achieve the same effect if, for example, you are seated on the robot's right side.*
+- `device_path`: If multiple SpaceMouse devices are connected, you can specify the path as described in [Identify the Connected SpaceMouse Devices (OPTIONAL)](#identify-the-connected-spacemouse-devices-optional). If it is defined as `''`, the first detected device will be used.
+
+
+### Launch the Joint Impedance Controller
+
+Create a configuration file in `src/franka_arm_controllers/config/` or modify one of the provided example configuration files. Then launch the controller to send torque commands to the Franka robot:
+
 ```bash
-ros2 launch spacemouse_publisher spacemouse_publisher.launch.py device_path:=/dev/hidraw1
-ros2 launch spacemouse_publisher spacemouse_publisher.launch.py device_path:=/dev/hidraw2
+   ros2 launch franka_arm_controllers joint_impedance_ik_controller.launch.py [robot_config_file:=your_config.yaml]
 ```
 
-By following these steps, you can teleoperate multiple arms or setups simultaneously without conflicts.
+The `robot_config_file` argument is **optional**. If not provided, it defaults to `example_fr3_config.yaml` in the `franka_arm_controllers/config/` directory.
 
-### Notes
-- The `device_path` parameter is **optional**. If not specified, it defaults to `''`.
-- Ensure that each terminal running a SpaceMouse publisher uses a unique `ROS_DOMAIN_ID` to avoid communication conflicts between instances, but remember to set the same `ROS_DOMAIN_ID` for the terminals running the subscribing processes **Gripper Manager** and **Franka Single Arm Controller** controlling the respective robots. 
+**Configuration parameters:**
+- Most parameters are documented in [`franka.launch.py`](src/franka_arm_controllers/launch/franka.launch.py) (see line 16 and following).
+- The `arbitrary_mounting` parameter specifies the robot's mounting angles.  
+  For details, see the section: [Arbitrary Mounting of the Robots (Experimental Feature)](#arbitrary-mounting-of-the-robots-experimental-feature).
+
+### Launch the Gripper Manager
+
+Create a configuration file in `src/gripper_manager/config/` or modify one of the provided example configuration files. Then launch the gripper manager node to control the gripper:
+
+```bash
+ros2 launch gripper_manager franka_gripper_client.launch.py [gripper_manager_config_file:=your_config.yaml]
+```
+
+**Configuration parameters:**
+
+- `namespace`: ROS 2 namespace (must match the robot and SpaceMouse publisher).
+- **ROS 2 topic names** (customize as needed for your setup):
+  - `grasp_action_topic`: (default: `/franka_gripper/grasp`)
+  - `homing_action_topic`: (default: `/franka_gripper/homing`)
+  - `gripper_command_topic`: (default: `/gripper_client/target_gripper_width_percent`)
+  - `joint_states_topic`: (default: `/franka_gripper/joint_states`)
+- `gripper_epsilon_inner`: Maximum allowed deviation for inner gripper width (default: `0.08`)
+- `gripper_epsilon_outer`: Maximum allowed deviation for outer gripper width (default: `0.08`)
+- `gripper_speed`: Maximum speed for gripper movement (default: `1.0`)
+- `gripper_force`: Maximum force applied by the gripper (default: `70.0`)
+
+
+## Arbitrary Mounting of the Robots (Experimental Feature)
+
+The `arbitrary mounting` mode allows for custom, non-standard mounting of the robot via the Desk API. This feature is **experimental** and intended for pilot users only. We are actively working toward formal certification for arbitrary mounting. This feature will become officially supported once this process is complete.
+
+---
+
+> ⚠️ **Warning:** Mounting the robot at an orientation other than table-top voids the certification and the warranty of FR3. 
+> It is intended for advanced users who understand the implications of bypassing safety mechanisms.
+> Use at your own risk. 
+
+
+### Conditions for Access
+
+- This feature is **experimental** and currently **not certified** for general use.
+- Customers must **sign a waiver** acknowledging the loss of:
+  - All **safety-related functions**
+  - All **warranty coverage**
+- After receiving the signed waiver, we will enable the `arbitrary mounting` API endpoint for your account.
+
+### How it works
+
+When this mode is active:
+
+- Control inputs from the **SpaceMouse** are interpreted in the **world coordinate system** instead of the robot’s base coordinate system.
+- The robot’s **TCP (Tool Center Point)** will move in the **world direction** corresponding to the SpaceMouse input — regardless of how the robot is mounted.
+- **Example:** Pushing the SpaceMouse forward moves the tool *"forward in the workspace,"* even if the robot is mounted upside-down or sideways.
+
+This enables intuitive teleoperation in flexible or unconventional setups.
+
+> ⚠️ **Note:** The control behavior described here is only relevant **if the `arbitrary mounting` feature is enabled and correctly configured for the robot**.
+>
+> The controller in this project **does not perform gravity compensation** itself — it only transforms control commands from the robot coordinate system into the world coordinate system.
+>
+> If the `arbitrary mounting` feature is **not properly enabled**, the robot will behave incorrectly or unsafely due to missing gravity compensation.
+>
+> Make sure the robot is configured for arbitrary mounting at the system level **before using this mode**.
+
+### Configuration
+
+To ensure correct operation with arbitrary mounting, **use the same mounting angles in your ROS configuration as you used when setting up arbitrary mounting at the system level**.
+
+1. **Edit the Configuration File**  
+   Open your config file in `franka_arm_controllers/config` and copy the arbitrary mounting angles (roll, pitch, yaw) from your system-level setup into the corresponding field`.
+
+2. **Rebuild and Restart**  
+   After saving your changes, rebuild your workspace and restart the controller for the new configuration to take effect.
+
 
 ## Known Issues & Troubleshooting
 
