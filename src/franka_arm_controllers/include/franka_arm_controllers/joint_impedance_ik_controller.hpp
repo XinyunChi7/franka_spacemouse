@@ -98,7 +98,7 @@ class JointImpedanceIKController : public controller_interface::ControllerInterf
   KDL::JntArray q_min_, q_max_, q_init_, q_result_;
   void solve_ik_(const Eigen::Vector3d& new_position, const Eigen::Quaterniond& new_orientation);
   bool is_gripper_loaded_ = true;
-  std::vector<double> arbitrary_mounting_;
+  std::vector<double> arm_mounting_orientation_;
 
   std::string robot_description_;
   std::unique_ptr<franka_semantic_components::FrankaRobotModel> franka_robot_model_;

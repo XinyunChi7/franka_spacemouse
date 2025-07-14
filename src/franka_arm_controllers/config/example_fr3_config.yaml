@@ -11,4 +11,4 @@ robot1:
   use_fake_hardware: "false"
   use_rviz: "false"
   # mounting roll, pitch, yaw in rad
-  arbitrary_mounting: [0,0,0]
+  arm_mounting_orientation: [0,0,0]

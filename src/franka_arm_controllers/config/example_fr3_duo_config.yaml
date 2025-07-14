@@ -11,7 +11,7 @@ LEFT:
   use_fake_hardware: "false"
   use_rviz: "false"
   # mounting roll, pitch, yaw in rad
-  arbitrary_mounting: [0.8933480924,-0.1745607426,0.4633450616]
+  arm_mounting_orientation: [0.8933480924,-0.1745607426,0.4633450616]
 
 RIGHT:
   arm_id: "fr3"
@@ -26,4 +26,4 @@ RIGHT:
   use_fake_hardware: "false"
   use_rviz: "false"
   # mounting roll, pitch, yaw in rad
-  arbitrary_mounting: [-0.8933480924,-0.1745607426,-0.4633450616]
+  arm_mounting_orientation: [-0.8933480924,-0.1745607426,-0.4633450616]

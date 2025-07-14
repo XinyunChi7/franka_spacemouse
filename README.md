@@ -130,7 +130,7 @@ The `robot_config_file` argument is **optional**. If not provided, it defaults t
 
 **Configuration parameters:**
 - Most parameters are documented in [`franka.launch.py`](src/franka_arm_controllers/launch/franka.launch.py) (see line 16 and following).
-- The `arbitrary_mounting` parameter specifies the robot's mounting angles.  
+- The `arm_mounting_orientation` parameter specifies the robot's mounting angles.  
   For details, see the section: [Arbitrary Mounting of the Robots (Experimental Feature)](#arbitrary-mounting-of-the-robots-experimental-feature).
 
 ### Launch the Gripper Manager

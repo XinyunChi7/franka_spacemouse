@@ -126,7 +126,8 @@ CallbackReturn JointImpedanceIKController::on_init() {
 bool JointImpedanceIKController::assign_parameters_() {
   arm_id_ = get_node()->get_parameter("arm_id").as_string();
   is_gripper_loaded_ = get_node()->get_parameter("load_gripper").as_string() == "true";
-  arbitrary_mounting_ = get_node()->get_parameter("arbitrary_mounting").as_double_array();
+  arm_mounting_orientation_ =
+      get_node()->get_parameter("arm_mounting_orientation").as_double_array();
 
   auto k_gains = get_node()->get_parameter("k_gains").as_double_array();
   auto d_gains = get_node()->get_parameter("d_gains").as_double_array();
@@ -296,7 +297,8 @@ void JointImpedanceIKController::spacemouse_callback(
 tf2::Vector3 JointImpedanceIKController::transform_velocity_to_world_frame_(
     const geometry_msgs::msg::Twist::SharedPtr& msg) const {
   tf2::Quaternion q;
-  q.setRPY(arbitrary_mounting_[0], arbitrary_mounting_[1], arbitrary_mounting_[2]);
+  q.setRPY(arm_mounting_orientation_[0], arm_mounting_orientation_[1],
+           arm_mounting_orientation_[2]);
 
   // Create rotation matrix from quaternion
   tf2::Matrix3x3 rotation_matrix(q);
