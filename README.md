@@ -75,12 +75,12 @@ To build the project, use the following `colcon` command with CMake arguments, r
 colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCHECK_TIDY=ON
 ```
 
-### Testing of FrankaArmControllers
+### Testing the Project
 
-The FrankaArmControllers package comes with a set of tests, which can be executed using the following command:
+The project comes with a set of tests, which can be executed using the following command:
 
 ```bash
-colcon test --packages-select franka_arm_controllers
+colcon test
 ```
 
 ## Getting Started
