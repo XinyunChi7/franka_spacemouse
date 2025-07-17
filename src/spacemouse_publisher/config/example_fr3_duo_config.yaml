@@ -1,6 +1,6 @@
 LEFT:
   namespace: left
-  device_path: /dev/hidraw2
+  device_path: /dev/hidraw6
   operator_position_front: true
 RIGHT:
   namespace: right

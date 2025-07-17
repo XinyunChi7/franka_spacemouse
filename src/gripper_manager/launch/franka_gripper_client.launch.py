@@ -15,7 +15,7 @@ def load_yaml(file_path):
 
 
 def generate_nodes(context):
-    config_file_name = LaunchConfiguration("gripper_manager_config_file").perform(context)
+    config_file_name = LaunchConfiguration("config_file").perform(context)
     package_config_dir = FindPackageShare("gripper_manager").perform(context)
     config_file = os.path.join(package_config_dir, "config", config_file_name)
     configs = load_yaml(config_file)
@@ -29,7 +29,6 @@ def generate_nodes(context):
                 namespace=str(config["namespace"]),
                 output="screen",
                 parameters=[
-                    {"namespace": str(config["namespace"])},
                     {"grasp_action_topic": str(config["grasp_action_topic"])},
                     {"homing_action_topic": str(config["homing_action_topic"])},
                     {"gripper_command_topic": str(config["gripper_command_topic"])},
@@ -49,7 +48,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "gripper_manager_config_file",
+                "config_file",
                 default_value="example_fr3_config.yaml",
                 description="Name of the gripper_manager configuration file to load",
             ),

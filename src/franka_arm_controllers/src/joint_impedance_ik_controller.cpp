@@ -162,9 +162,14 @@ CallbackReturn JointImpedanceIKController::on_configure(
     return CallbackReturn::FAILURE;
   }
 
-  namespace_prefix_ = get_node()->get_parameter("namespace").as_string();
-  if (namespace_prefix_ != "")
-    namespace_prefix_ = namespace_prefix_ + "_";
+  namespace_prefix_ = get_node()->get_namespace();
+
+  if (namespace_prefix_ == "/" || namespace_prefix_.empty()) {
+    namespace_prefix_.clear();
+  } else {
+    // Remove leading slash and add trailing underscore
+    namespace_prefix_ = namespace_prefix_.substr(1) + "_";
+  }
 
   franka_robot_model_ = std::make_unique<franka_semantic_components::FrankaRobotModel>(
       franka_semantic_components::FrankaRobotModel(arm_id_ + "/" + k_robot_model_interface_name,
@@ -216,7 +221,8 @@ CallbackReturn JointImpedanceIKController::on_configure(
     return CallbackReturn::FAILURE;
   }
 
-  if (!tree_.getChain("base", namespace_prefix_ + "fr3_hand_tcp", chain_)) {
+  std::string tcp_name = namespace_prefix_ + "fr3_hand_tcp";
+  if (!tree_.getChain("base", tcp_name, chain_)) {
     RCLCPP_FATAL(get_node()->get_logger(), "Failed to extract KDL chain.");
     return CallbackReturn::FAILURE;
   }

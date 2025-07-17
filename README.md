@@ -103,10 +103,10 @@ In this example, **hidraw1** is the identifier for the SpaceMouse. Based on this
 Create a configuration file in `src/spacemouse_publisher/config/` or modify one of the provided example configuration files. Then launch the SpaceMouse publisher node to read input from the SpaceMouse and publish it as ROS 2 messages:
 
 ```bash
-ros2 launch spacemouse_publisher spacemouse_publisher.launch.py [spacemouse_config_file:=your_config.yaml]
+ros2 launch spacemouse_publisher spacemouse_publisher.launch.py [config_file:=your_config.yaml]
 ```
 
-The `spacemouse_config_file` argument is **optional**. If not provided, it defaults to `example_fr3_config.yaml` in the `spacemouse_publisher/config/` directory.
+The `config_file` argument is **optional**. If not provided, it defaults to `example_fr3_config.yaml` in the `spacemouse_publisher/config/` directory.
 
 **Configuration parameters:**
 
@@ -138,7 +138,7 @@ The `robot_config_file` argument is **optional**. If not provided, it defaults t
 Create a configuration file in `src/gripper_manager/config/` or modify one of the provided example configuration files. Then launch the gripper manager node to control the gripper:
 
 ```bash
-ros2 launch gripper_manager franka_gripper_client.launch.py [gripper_manager_config_file:=your_config.yaml]
+ros2 launch gripper_manager franka_gripper_client.launch.py [config_file:=your_config.yaml]
 ```
 
 **Configuration parameters:**
@@ -157,7 +157,7 @@ ros2 launch gripper_manager franka_gripper_client.launch.py [gripper_manager_con
 
 ## Arbitrary Mounting of the Robots (Experimental Feature)
 
-The `arbitrary mounting` mode allows for custom, non-standard mounting of the robot via the Desk API. This feature is **experimental** and intended for pilot users only. We are actively working toward formal certification for arbitrary mounting. This feature will become officially supported once this process is complete.
+The `arbitrary mounting` mode allows for custom, non-standard mounting of the robot via the Desk API (standard mounting: table-top). This feature is **experimental** and intended for pilot users only. We are actively working toward formal certification for arbitrary mounting. This feature will become officially supported once this process is complete.
 
 ---
 

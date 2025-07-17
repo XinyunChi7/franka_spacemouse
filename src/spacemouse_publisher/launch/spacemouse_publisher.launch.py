@@ -15,7 +15,7 @@ def load_yaml(file_path):
 
 
 def generate_nodes(context):
-    config_file_name = LaunchConfiguration("spacemouse_config_file").perform(context)
+    config_file_name = LaunchConfiguration("config_file").perform(context)
     package_config_dir = FindPackageShare("spacemouse_publisher").perform(context)
     config_file = os.path.join(package_config_dir, "config", config_file_name)
     configs = load_yaml(config_file)
@@ -42,7 +42,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "spacemouse_config_file",
+                "config_file",
                 default_value="example_fr3_config.yaml",
                 description="Name of the spacemouse configuration file to load",
             ),
