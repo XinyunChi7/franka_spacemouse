@@ -30,18 +30,18 @@ class GripperClient(Node):
         self.declare_parameter("gripper_speed", DEFAULT_GRIPPER_SPEED)
         self.declare_parameter("gripper_force", DEFAULT_GRIPPER_FORCE)
 
-        grasp_action_topic = (
-            self.resolve_topic_name(self.get_parameter("grasp_action_topic").get_parameter_value().string_value
-        ))
-        homing_action_topic = (
-            self.resolve_topic_name(self.get_parameter("homing_action_topic").get_parameter_value().string_value
-        ))
-        gripper_command_topic = (
-            self.resolve_topic_name(self.get_parameter("gripper_command_topic").get_parameter_value().string_value
-        ))
-        joint_states_topic = (
-            self.resolve_topic_name(self.get_parameter("joint_states_topic").get_parameter_value().string_value
-        ))
+        grasp_action_topic = self.resolve_topic_name(
+            self.get_parameter("grasp_action_topic").get_parameter_value().string_value
+        )
+        homing_action_topic = self.resolve_topic_name(
+            self.get_parameter("homing_action_topic").get_parameter_value().string_value
+        )
+        gripper_command_topic = self.resolve_topic_name(
+            self.get_parameter("gripper_command_topic").get_parameter_value().string_value
+        )
+        joint_states_topic = self.resolve_topic_name(
+            self.get_parameter("joint_states_topic").get_parameter_value().string_value
+        )
         self._gripper_epsilon_inner = float(
             self.get_parameter("gripper_epsilon_inner").get_parameter_value().string_value
         )
