@@ -139,6 +139,13 @@ The `robot_config_file` argument is **optional**. If not provided, it defaults t
 - The `arm_mounting_orientation` parameter specifies the robot's mounting angles.  
   For details, see the section: [Arbitrary Mounting of the Robots (Experimental Feature)](#arbitrary-mounting-of-the-robots-experimental-feature).
 
+How to adjust the teleoperated robot speed?
+Modify '/franka_spacemouse/src/franka_single_arm_controllers/src/joint_impedance_ik_controller.cpp'
+'''
+  const double max_linear_pos_update = 0.003; # default value: 0.007
+  const double max_angular_pos_update = 0.01; # default value: 0.03
+'''
+
 ### Launch the Gripper Manager
 
 Create a configuration file in `src/gripper_manager/config/` or modify one of the provided example configuration files. Then launch the gripper manager node to control the gripper:
