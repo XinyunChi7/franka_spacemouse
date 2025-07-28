@@ -2,6 +2,12 @@
 
 This repository contains ROS 2 packages for controlling a Franka FR3 arm with the Franka Hand using a 3Dconnexion SpaceMouse. 
 
+## Version infomation
+franka_spacemouse v0.1.0
+franka_ros2 1.0.0
+franka_description 0.4.0
+libfranka 0.13.3/6
+
 ## Packages
 
 ### 1. `franka_arm_controllers`
