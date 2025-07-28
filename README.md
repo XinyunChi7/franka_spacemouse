@@ -141,11 +141,11 @@ The `robot_config_file` argument is **optional**. If not provided, it defaults t
 
 > 💡 **Hint:**  
 > How to adjust the teleoperated robot speed?
-- Modify '/franka_spacemouse/src/franka_single_arm_controllers/src/joint_impedance_ik_controller.cpp'
-'''
+- Modify '/franka_spacemouse/src/franka_single_arm_controllers/src/joint_impedance_ik_controller.cpp' file: 
+```
   const double max_linear_pos_update = 0.003; # default value: 0.007
   const double max_angular_pos_update = 0.01; # default value: 0.03
-'''
+```
 
 ### Launch the Gripper Manager
 
